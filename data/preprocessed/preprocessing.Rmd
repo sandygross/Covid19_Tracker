@@ -1,0 +1,44 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(tidyverse)
+library(countrycode)
+covid <- read_csv("../raw/worldometer_coronavirus_daily_data.csv")
+code <- read.csv("https://raw.githubusercontent.com/plotly/datasets/master/2014_world_gdp_with_codes.csv")
+
+covid_final = merge(covid, code, by.x = "country", by.y = "COUNTRY", all.x = TRUE)
+covid_final <- select(covid_final, -`GDP..BILLIONS.`)
+```
+
+```{r}
+countries <- unique(covid_final$country[is.na(covid_final$CODE)])
+remove_countries <- c("Channel Islands", "Micronesia")
+filtered_countries <- countries[!countries %in% remove_countries]
+iso3_codes <- countrycode(filtered_countries, "country.name", "iso3c")
+
+names(iso3_codes) <- filtered_countries
+
+covid_final$CODE[is.na(covid_final$CODE) & covid_final$country %in% names(iso3_codes)] <- iso3_codes[covid_final$country[is.na(covid_final$CODE) & covid_final$country %in% names(iso3_codes)]]
+write_csv(x = covid_final, "covid.csv")
+```
+
+```{r}
+covid_summary <- read_csv("../raw/worldometer_coronavirus_summary_data.csv")
+code <- read.csv("https://raw.githubusercontent.com/plotly/datasets/master/2014_world_gdp_with_codes.csv")
+
+covid_summary = merge(covid_summary, code, by.x = "country", by.y = "COUNTRY", all.x = TRUE)
+covid_summary <- select(covid_summary, -`GDP..BILLIONS.`)
+countries_summary <- unique(covid_summary$country[is.na(covid_summary$CODE)])
+filtered_countries_summary <- countries_summary[!countries_summary %in% remove_countries]
+iso3_codes_summary <- countrycode(filtered_countries_summary, "country.name", "iso3c")
+
+names(iso3_codes_summary) <- filtered_countries_summary
+
+covid_summary$CODE[is.na(covid_summary$CODE) & covid_summary$country %in% names(iso3_codes_summary)] <- iso3_codes[covid_summary$country[is.na(covid_summary$CODE) & covid_summary$country %in% names(iso3_codes_summary)]]
+write_csv(x = covid_summary, "covid_summary.csv")
+```
+
